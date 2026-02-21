@@ -1,4 +1,4 @@
-import { useGLTF, useScroll, Trail } from '@react-three/drei';
+import { useGLTF, Trail } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
@@ -6,63 +6,97 @@ import * as THREE from 'three';
 export function Enterprise() {
     const { scene } = useGLTF('/models/enterprise.glb');
     const group = useRef<THREE.Group>(null);
-    const scroll = useScroll();
 
-    useFrame((state) => {
-        if (!group.current || !scroll) return;
+    // Track current position and rotation for extremely smooth framerate-independent lerping
+    const currentPos = useRef(new THREE.Vector3(2, -0.5, 2));
+    const currentRot = useRef(new THREE.Euler(0.1, -Math.PI / 4 + 0.2, 0.1));
+    const currentScale = useRef(new THREE.Vector3(0.015, 0.015, 0.015));
 
-        const r = scroll.offset;
+    useFrame((state, delta) => {
+        if (!group.current) return;
+
+        const isMobile = window.innerWidth < 768;
+
+        // Directly calculate scroll progress from the native window layout
+        // `maxScroll` prevents NaNs if DOM isn't fully ready
+        const scrollY = window.scrollY || document.documentElement.scrollTop;
+        const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        const r = Math.max(0, Math.min(1, scrollY / maxScroll));
 
         let targetPos = new THREE.Vector3(0, 0, 0);
         let targetRot = new THREE.Euler(0, -Math.PI / 4, 0);
+        let targetScale = isMobile ? new THREE.Vector3(0.008, 0.008, 0.008) : new THREE.Vector3(0.015, 0.015, 0.015);
 
-        if (r < 0.2) {
-            const progress = r / 0.2;
-            targetPos.set(0, -1 + progress * 0.5, 0);
-            targetRot.set(0.1, -Math.PI / 4 + progress * 0.5, 0.1);
-        }
-        else if (r < 0.6) {
-            const progress = (r - 0.2) / 0.4;
+        // Based on approximate section heights: Hero (100vh), Features (400vh), Legacy (100vh), Footer (100vh)
+        // Total ~700vh. Hero = 0-0.15, Features = 0.15-0.75, Legacy = 0.75-0.9, Footer = 0.9-1.0
 
-            if (progress < 0.33) {
-                const subP = progress / 0.33;
-                targetPos.set(-1 * subP, 0.5 * subP, 2 * subP);
-                targetRot.set(0.2 * subP, -Math.PI / 4 + 0.5 + subP * Math.PI, 0);
-            } else if (progress < 0.66) {
-                const subP = (progress - 0.33) / 0.33;
-                targetPos.set(-1 + 2 * subP, 0.5 - 1 * subP, 2 - 2 * subP);
-                targetRot.set(0.2 - 0.4 * subP, Math.PI / 4 + Math.PI - subP * (Math.PI / 2), 0);
-            } else {
-                const subP = (progress - 0.66) / 0.34;
-                targetPos.set(1.5, -0.5, -1);
-                targetRot.set(-0.2, Math.PI / 4 + Math.PI / 2 - subP * Math.PI / 4, 0.1 * subP);
-            }
+        if (r < 0.15) {
+            const progress = r / 0.15;
+            targetPos.set(isMobile ? 0 : 2, -0.5 + progress * 0.5, isMobile ? 1 : 2);
+            targetRot.set(0.1, -Math.PI / 4 + 0.2 + progress * 0.1, 0.1);
         }
-        else if (r < 0.8) {
-            const progress = (r - 0.6) / 0.2;
-            targetPos.set(1.5 - progress * 5, -0.5 + progress * 2, -4);
-            targetRot.set(progress * 0.5, -Math.PI / 4 - progress, progress * 0.5);
+        else if (r >= 0.15 && r < 0.20) {
+            // Smooth transition diving into features (0.15 - 0.20)
+            const p = (r - 0.15) / 0.05;
+            targetPos.set((isMobile ? 0 : 2) - p * 0.8, 0, (isMobile ? 1 : 2) - p);
+            targetRot.set(
+                THREE.MathUtils.lerp(0.1, 0, p),
+                THREE.MathUtils.lerp(-Math.PI / 4 + 0.3, -Math.PI / 2, p),
+                THREE.MathUtils.lerp(0.1, Math.PI / 2 - 0.2, p)
+            );
+        }
+        else if (r >= 0.20 && r < 0.75) {
+            // The features section
+            const progress = (r - 0.20) / 0.55;
+
+            // On mobile, text is full width, so keep ship centered and placed just above the title (y=1)
+            // On desktop, push ship left to balance text on right
+            targetPos.set(isMobile ? 0 : -2, isMobile ? 1.0 : 0, 1);
+
+            // Smoother continuous rotation matching the 4 features
+            targetRot.set(0, -Math.PI / 2 + progress * (1.5 * Math.PI), Math.PI / 2 - 0.2);
+        }
+        else if (r >= 0.75 && r < 0.9) {
+            // Legacy fast fly-by
+            const progress = (r - 0.75) / 0.15;
+            targetPos.set((isMobile ? 0 : 1.2) - progress * 10, progress * 4, 1 - progress * 6);
+            targetRot.set(progress * 0.5, Math.PI - progress * (Math.PI / 4), (Math.PI / 2 - 0.2) - progress * 0.5);
         }
         else {
-            const progress = (r - 0.8) / 0.2;
-            targetPos.set(-3.5 + progress * 3.5, 1.5 - progress * 2, -4 + progress * 3);
-            targetRot.set(0.5 - progress * 0.5, -Math.PI / 4 - 1 + progress * 1.5, 0.5 - progress * 0.5);
+            // Final landing
+            const progress = (r - 0.9) / 0.1;
+            targetPos.set((isMobile ? -2 : -8.8) + progress * (isMobile ? 1 : 3.8), 4 - progress, -5 - progress);
+            targetRot.set(0.5 + progress * 0.2, 3 * Math.PI / 4 - progress * 0.5, Math.PI / 2 - 0.7 - progress * 0.2);
         }
 
-        group.current.position.lerp(targetPos, 0.05);
+        // Apply smooth slerping / lerping INDEPENDENT of actual scroll speed
+        // This gives the "frame by frame" continuous tracking feeling while still being smooth
+        currentPos.current.lerp(targetPos, delta * 5);
+        currentScale.current.lerp(targetScale, delta * 5);
 
-        const currentQuat = new THREE.Quaternion().setFromEuler(group.current.rotation);
-        const targetQuat = new THREE.Quaternion().setFromEuler(targetRot);
-        currentQuat.slerp(targetQuat, 0.05);
-        group.current.rotation.setFromQuaternion(currentQuat);
+        const qCurrent = new THREE.Quaternion().setFromEuler(currentRot.current);
+        const qTarget = new THREE.Quaternion().setFromEuler(targetRot);
+        qCurrent.slerp(qTarget, delta * 5);
+        currentRot.current.setFromQuaternion(qCurrent);
 
-        group.current.position.y += Math.sin(state.clock.elapsedTime) * 0.002;
+        // Apply the smoothed values
+        group.current.position.copy(currentPos.current);
+        group.current.rotation.copy(currentRot.current);
+        group.current.scale.copy(currentScale.current);
+
+        // Add subtle constant floating on top of the targeted position
+        group.current.position.y += Math.sin(state.clock.elapsedTime) * 0.05;
+        group.current.position.z += Math.cos(state.clock.elapsedTime) * 0.02;
     });
+
+    // Extract the dynamic scale logic internally instead of passing as prop to primitive
+    // because primitive updates scale destructively
+    // We already apply scale to the parent group!
 
     return (
         <group ref={group}>
             <Trail
-                width={0.2}
+                width={0.5}
                 color="#60a5fa" // blue-400
                 length={8}
                 decay={1}
@@ -71,7 +105,8 @@ export function Enterprise() {
                 interval={1}
                 target={group}
             >
-                <primitive object={scene} scale={[0.005, 0.005, 0.005]} />
+                {/* Reset primitive scale to 1 because group handles dynamic scaling */}
+                <primitive object={scene} scale={[1, 1, 1]} />
             </Trail>
         </group>
     );

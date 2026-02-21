@@ -220,7 +220,7 @@ export default function App() {
       </main>
 
       {/* Features Section (Sticky Scroll) */}
-      <section ref={featuresRef} className="relative h-[400vh] bg-black">
+      <section ref={featuresRef} className="relative h-[400vh] bg-transparent">
         <div className="sticky top-0 h-screen w-full overflow-hidden">
           {/* Background Glows that change based on scroll */}
           {FEATURES.map((feature, index) => {
@@ -240,8 +240,8 @@ export default function App() {
 
           <div className="relative z-10 flex h-full items-center justify-center px-6 md:px-12 lg:px-24">
             <div className="grid w-full max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2">
-              {/* Left Side: Text Content */}
-              <div className="relative h-[400px] flex flex-col justify-center">
+              {/* Text Content (Moved to Right Side) */}
+              <div className="relative h-[400px] flex flex-col justify-center lg:col-start-2">
                 {FEATURES.map((feature, index) => {
                   const start = index / FEATURES.length;
                   const end = (index + 1) / FEATURES.length;
@@ -270,64 +270,6 @@ export default function App() {
                 })}
               </div>
 
-              {/* Right Side: Visual Element (Card Stack inspired by screenshot) */}
-              <div className="relative hidden h-[500px] items-center justify-center lg:flex">
-                <div className="relative w-full max-w-md">
-                  {FEATURES.map((feature, index) => {
-                    const start = index / FEATURES.length;
-                    const end = (index + 1) / FEATURES.length;
-                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                    const opacity = useTransform(scrollYProgress, [start, start + 0.1, end - 0.1, end], [0, 1, 1, 0]);
-                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                    const scale = useTransform(scrollYProgress, [start, start + 0.1, end - 0.1, end], [0.8, 1, 1, 1.2]);
-                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                    const rotate = useTransform(scrollYProgress, [start, start + 0.1, end - 0.1, end], [-10, 0, 0, 10]);
-
-                    return (
-                      <motion.div
-                        key={`${feature.id}-visual`}
-                        style={{ opacity, scale, rotate }}
-                        className="absolute inset-0 flex items-center justify-center"
-                      >
-                        <div className="relative h-[450px] w-[320px] rounded-[32px] border border-white/20 bg-gradient-to-br from-white/10 to-transparent p-1 backdrop-blur-2xl">
-                          <div className="h-full w-full rounded-[30px] bg-black/80 p-8 flex flex-col justify-between overflow-hidden">
-                            {/* Decorative Grid Pattern */}
-                            <div className="absolute inset-0 opacity-10 pointer-events-none">
-                              <div className="h-full w-full" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                            </div>
-
-                            <div className="relative z-10">
-                              <div className="mb-4 text-[10px] font-bold tracking-[0.3em] text-white/30 uppercase">System Protocol</div>
-                              <div className="h-px w-full bg-gradient-to-r from-white/20 to-transparent" />
-                            </div>
-
-                            <div className="relative z-10 flex flex-col items-center justify-center py-12">
-                              <div className="mb-6 h-24 w-24 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                                {feature.icon}
-                              </div>
-                              <div className="text-center font-display text-xs font-bold tracking-widest text-white/40 uppercase">
-                                Active Module {index + 1}
-                              </div>
-                            </div>
-
-                            <div className="relative z-10">
-                              <div className="flex justify-between items-end">
-                                <div>
-                                  <div className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Vessel ID</div>
-                                  <div className="font-mono text-xs">NCC-1701</div>
-                                </div>
-                                <div className="h-8 w-8 rounded-full border border-white/20 flex items-center justify-center">
-                                  <div className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           </div>
 

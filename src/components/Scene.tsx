@@ -1,4 +1,3 @@
-import { ScrollControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { Suspense } from 'react';
 import { Enterprise } from './Enterprise';
@@ -12,12 +11,9 @@ export function Scene() {
                 <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
                 <directionalLight position={[-10, -10, -5]} intensity={1} color="#4338ca" /> {/* Blue rim light */}
 
-                {/* ScrollControls allows us to map scroll position to 3D animations */}
-                <ScrollControls pages={4} damping={0.25}>
-                    <Suspense fallback={null}>
-                        <Enterprise />
-                    </Suspense>
-                </ScrollControls>
+                <Suspense fallback={null}>
+                    <Enterprise />
+                </Suspense>
             </Canvas>
         </div>
     );
