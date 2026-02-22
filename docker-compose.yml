@@ -1,8 +1,13 @@
-version: '3.8'
-
 services:
-  star-trek-app:
+  star-trek:
     build: .
+    container_name: star-trek
     ports:
       - "3005:3000"
     restart: unless-stopped
+    networks:
+      - n8n-docker_default
+
+networks:
+  n8n-docker_default:
+    external: true
