@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 
 export function Enterprise() {
-    const { scene } = useGLTF('/star-trek/models/enterprise.glb');
+    const { scene } = useGLTF(`${import.meta.env.BASE_URL}models/enterprise.glb`);
     const group = useRef<THREE.Group>(null);
 
     // Track current position and rotation for extremely smooth framerate-independent lerping
@@ -112,4 +112,4 @@ export function Enterprise() {
     );
 }
 
-useGLTF.preload('/star-trek/models/enterprise.glb');
+useGLTF.preload(`${import.meta.env.BASE_URL}models/enterprise.glb`);

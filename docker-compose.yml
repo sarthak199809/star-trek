@@ -4,5 +4,5 @@ services:
   star-trek-app:
     build: .
     ports:
-      - "8080:80"
+      - "3005:3000"
     restart: unless-stopped

@@ -14,14 +14,16 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # Since Vite is configured with base: '/star-trek/', 
 # we place the built files in a corresponding subfolder
 COPY --from=builder /app/dist /usr/share/nginx/html/star-trek
 
 # Also copy them to the root just in case the reverse proxy strips the path
-# (This ensures it works whether the proxy forwards the path or strips it)
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 3000
 
 CMD ["nginx", "-g", "daemon off;"]
